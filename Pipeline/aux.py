@@ -8,7 +8,8 @@ import matplotlib
 matplotlib.style.use('ggplot')
 import pylab as pl
 from upload_and_vizualize import camel_to_snake
-
+from datetime import datetime as dt
+from datetime import date 
 
 def get_desired_features(dict, desired_features):
     '''
@@ -93,3 +94,34 @@ def add_dummies(df,need_dummies):
 
     df_w_dummies = pd.concat([df,new_cols],axis=1).reset_index(drop=True)
     return df_w_dummies
+
+def convert_to_datetime(series_row, date_format):
+    if str(series_row) == 'nan':
+        return float('nan')
+    return dt.strptime(series_row, date_format)
+
+def convert_to_weekday(series_row, output):
+    if str(series_row) == 'NaT' or str(series_row)== 'nan':
+        return float('nan')
+    if output == 'day_num':
+        return date.weekday(series_row)
+    output_dict = {"weekday":'%A', "month_name":'%B',"month_num":'%m'}
+    return date.strftime(series_row,output_dict[output])
+
+def convert_to_bool(df, column, conversion):
+    return df[column].replace(conversion)
+
+def add_date_cols(df, date_columns, date_format):
+    for date_column in date_columns: 
+        df[date_column+'_datetime'] = df[date_column].apply(convert_to_datetime, date_format=date_format)
+        for new_col in ['day_num','weekday','month_name','month_num']:
+            df[date_column+'_'+new_col] = df[date_column+'_datetime'].apply(convert_to_weekday, output=new_col)
+            #df[date_column+'day_of_week'] = df.datetime.apply(convert_to_weekday, date_column, output='weekday')
+            #df[date_column+'month'] =  df.datetime.apply(convert_to_weekday, date_column, output='month_name')
+            #df[date_column+'month_num'] =  df.datetime.apply(convert_to_weekday, date_column, output='month_num')
+
+def get_occupied_frame(df, date_columns, date_format, bool_param = None, occ_column = None, conversion= None):
+    add_date_cols(df,date_columns, date_format)
+    if bool_param != None:
+        df[occ_column] = convert_to_bool(df,occ_column,conversion)
+        return df[df[occ_column] == bool_param]
