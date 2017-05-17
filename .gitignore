@@ -1,0 +1,7 @@
+#Ignore folders
+
+data/
+npdes_downloads/
+
+#Ignore zip
+*.zip
