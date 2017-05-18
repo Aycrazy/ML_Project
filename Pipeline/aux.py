@@ -105,7 +105,7 @@ def convert_to_weekday(series_row, output):
         return float('nan')
     if output == 'day_num':
         return date.weekday(series_row)
-    output_dict = {"weekday":'%A', "month_name":'%B',"month_num":'%m'}
+    output_dict = {"weekday":'%A', "month_name":'%B',"month_num":'%m',"year":"%Y"}
     return date.strftime(series_row,output_dict[output])
 
 def convert_to_bool(df, column, conversion):
@@ -114,7 +114,7 @@ def convert_to_bool(df, column, conversion):
 def add_date_cols(df, date_columns, date_format):
     for date_column in date_columns: 
         df[date_column+'_datetime'] = df[date_column].apply(convert_to_datetime, date_format=date_format)
-        for new_col in ['day_num','weekday','month_name','month_num']:
+        for new_col in ['day_num','weekday','month_name','month_num','year']:
             df[date_column+'_'+new_col] = df[date_column+'_datetime'].apply(convert_to_weekday, output=new_col)
             #df[date_column+'day_of_week'] = df.datetime.apply(convert_to_weekday, date_column, output='weekday')
             #df[date_column+'month'] =  df.datetime.apply(convert_to_weekday, date_column, output='month_name')
