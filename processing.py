@@ -61,7 +61,7 @@ def add_dummy(df, variable_list, drop_one=False, drop_original=False):
     '''
     for variable in variable_list:
             
-        df_dummy = pd.get_dummies(df[variable], drop_first=drop_one)
+        df_dummy = pd.get_dummies(df[variable], drop_first=drop_one, prefix = variable)
         df = pd.concat([df, df_dummy], axis=1)
         if drop_original:
             df = df.drop(variable, 1)
