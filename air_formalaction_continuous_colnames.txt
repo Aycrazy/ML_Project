@@ -1,0 +1,17 @@
+'PGM_SYS_ID', '2007_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2008_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2009_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2010_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2011_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2012_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2013_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2014_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2015_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2016_formalaction_SETTLEMENT_ENTERED_DATE_year',
+'2017_formalaction_SETTLEMENT_ENTERED_DATE_year'
+
+
+NOTE: This file is NOT one line per facility.
+This file is one line per facility per year it had a penalty.
+For example, if facility 123 was penalized in 2008 and 2009, 
+facility 123 will appear in 2 separate rows. 

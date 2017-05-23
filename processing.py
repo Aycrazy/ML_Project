@@ -34,8 +34,8 @@ def date_and_filter(df, date_format, date_col, interest_var, fac_id):
     df = get_month_year_col(df, date_col, date_format)
     
     #filter year
-    y2k = dt.strptime('1999/12/31',"%Y/%m/%d")
-    df = df[df['SETTLEMENT_ENTERED_DATE_datetime'] > y2k ]
+    year = dt.strptime('2006/12/31',"%Y/%m/%d")
+    df = df[df['SETTLEMENT_ENTERED_DATE_datetime'] > year ]
     
     #filter needed
     date_time = date_col + '_datetime'
@@ -83,3 +83,20 @@ def add_count_cols(df, fac_id, year_col, list_var, file_name):
     df = dummied.groupby(fac_id).sum()
     
     return df
+
+
+
+def sum_by_year_in_cols(df, fac_id, year_list, continuous_var, year_var, file):
+    for year in year_list:
+        df[year + '_' + file + '_' + year_var] = [0] * len(df)
+    
+    for i, row in df.iterrows():
+        for column in df.columns:
+            if str(row[year_var]) in column:
+                df.loc[i,column] = row[continuous_var]
+    
+    df = df.groupby([fac_id, year_var]).sum().reset_index()
+    df = df.drop([year_var, continuous_var], 1)
+    
+    return df
+        
