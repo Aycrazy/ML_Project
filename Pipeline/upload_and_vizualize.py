@@ -196,4 +196,17 @@ def special_plot(df, column_name,point_of_interest1, point_of_interest2):
     ax4.set_xlabel('Income in Sci Notation')
     ax4.grid()
     plt.tight_layout()
-   
+
+def create_date_charts(df, date_types, original_date_columns):
+    for date_column in original_date_columns:
+        for date_type in date_types:
+            if date_type == 'month':
+                df.sort([date_column+'_month_num']).groupby([date_column+'_month_name'], sort=False).size().to_frame().plot(kind='bar',color ='blue')
+            if date_type == 'day':
+                df.sort([date_column+'_day_num']).groupby([date_column+'_weekday'], sort=False).size().to_frame().plot(kind='bar',color='green')
+            if date_type == 'year': 
+                df.groupby([date_column+'_year']).size().to_frame().plot(kind='area',color='orange')
+    plt.show()
+
+def day_to_int(series_row):
+    return int(str(series_row).split()[0])

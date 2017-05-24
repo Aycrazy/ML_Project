@@ -105,23 +105,27 @@ def convert_to_weekday(series_row, output):
         return float('nan')
     if output == 'day_num':
         return date.weekday(series_row)
-    output_dict = {"weekday":'%A', "month_name":'%B',"month_num":'%m'}
+    output_dict = {"weekday":'%A', "month_name":'%B',"month_num":'%m',"year":"%Y"}
     return date.strftime(series_row,output_dict[output])
 
 def convert_to_bool(df, column, conversion):
     return df[column].replace(conversion)
 
-def add_date_cols(df, date_columns, date_format):
+def add_date_cols(df, date_columns, date_format, date_types):
+    '''
+    date_types = list of datetime output indicators
+    '''
+    if 'month' in date_types:
+        print(date_types)
+        date_types = [v for v in date_types if v != 'month']
+        date_types.extend(['month_name','month_num'])
     for date_column in date_columns: 
         df[date_column+'_datetime'] = df[date_column].apply(convert_to_datetime, date_format=date_format)
-        for new_col in ['day_num','weekday','month_name','month_num']:
+        for new_col in date_types:
             df[date_column+'_'+new_col] = df[date_column+'_datetime'].apply(convert_to_weekday, output=new_col)
-            #df[date_column+'day_of_week'] = df.datetime.apply(convert_to_weekday, date_column, output='weekday')
-            #df[date_column+'month'] =  df.datetime.apply(convert_to_weekday, date_column, output='month_name')
-            #df[date_column+'month_num'] =  df.datetime.apply(convert_to_weekday, date_column, output='month_num')
-
-def get_occupied_frame(df, date_columns, date_format, bool_param = None, occ_column = None, conversion= None):
-    add_date_cols(df,date_columns, date_format)
+            
+def get_occupied_frame(df, date_columns, date_format, date_types, bool_param = None, occ_column = None, conversion= None):
+    add_date_cols(df,date_columns, date_format, date_types)
     if bool_param != None:
         df[occ_column] = convert_to_bool(df,occ_column,conversion)
         return df[df[occ_column] == bool_param]
