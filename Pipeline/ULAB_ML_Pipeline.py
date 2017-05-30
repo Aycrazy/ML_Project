@@ -37,7 +37,7 @@ from sklearn.metrics import *
 import csv
 from errno import EEXIST
 from os import makedirs,path
-
+import re
 
 # ### Select data and features
 
@@ -194,14 +194,14 @@ def generate_correlations(data_file):
 	mkdir_p(corr_dir)
        
 	correlations = data_file.corr()
-	correlations.to_csv(corr_dir + "/correlations.csv".format(corr_dir))
+	correlations.to_csv(corr_dir, + "/correlations.csv".format(corr_dir))
 
 	for x in data_file.describe().keys():
 		for y in [i for i in data_file.describe().keys() if i != x]:
 			plt.scatter(data_file[x],data_file[y])
 			plt.xlabel(x)
 			plt.ylabel(y)
-			plt.savefig(corr_dir"/"+x+"-"+y+"_correlation.png", bbox_inches = "tight")
+			plt.savefig(corr_dir,"/"+x+"-"+y+"_correlation.png", bbox_inches = "tight")
 			plt.close()
 
 
