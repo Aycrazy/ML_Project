@@ -370,51 +370,35 @@ def run_loops(year_list, models_to_run, clfs, grid):
     
     master_feature = generate_features('2006','2016')
     master_label = generate_label('2006','2016')
-    merged = pd.merge(master_feature, master_label, how='inner', left_on=['PGM_SYS_ID','HPV_DAYZERO_DATE_year'], right_on = ['PGM_SYS_ID','ACTUAL_END_DATE_year'])
-    #run for each set of train-test years
-    master_feature = merged.drop('Outcome',axis=1)
-    master_label = merged[['Outcome']]
-
+    merged = pd.merge(master_feature.dropna(), master_label, how='inner', left_on=['PGM_SYS_ID','HPV_DAYZERO_DATE_year'], right_on = ['PGM_SYS_ID','ACTUAL_END_DATE_year'])
+ 
     for each_set in year_list:
         
         #Get train and test sets
         start_date = each_set['train'][0][0]
         end_date = each_set['train'][0][1]
         test_date = each_set['test']
-        YEAR_LABEL = 'ACTUAL_END_DATE_year'
-        YEAR_FEATURE= 'HPV_DAYZERO_DATE_year'
+        YEAR = 'HPV_DAYZERO_DATE_year'
 
-        X_train = master_feature[master_feature[YEAR_FEATURE] >= start_date]
-        X_train = X_train[X_train[YEAR_FEATURE] <= end_date]
-        
-        X_test = master_feature[master_feature[YEAR_FEATURE] == test_date]
-        
-        y_train = master_label[master_label[YEAR_LABEL] >= start_date]
-        y_train = y_train[y_train[YEAR_LABEL] <= end_date]
-        
-        y_test = master_label[master_label[YEAR_LABEL] == test_date]
+        training = merged[merged[YEAR]>= start_date]
+        training = training[training[YEAR] <= end_date]
+        testing = merged[merged[YEAR] == test_date]
+
+        X_train = training.iloc[:,2:].drop('Outcome', axis = 1)
+        y_train = training[['Outcome']]
+
+        X_test = testing.iloc[:,2:].drop('Outcome', axis = 1)
+        y_test = testing[['Outcome']]
     
         #run once standardized (continuous variables) and once with undersampling + standarization
-        specifications = ['_Standardized', '_Stand_UndSamp']
-        for n in range(2):
-            specification = specifications[n]
-            train_test_year = 'TR:' + str(start_date) + '-' + str(end_date) + '&TS:' + str(test_date) + '_'
-            # standardize
-            if n == 0:    
-                X_train_st, X_test_st = transform(X_train, X_test)  #Need to hardcode continuous variables
-                results_df_1 = clf_loop(models_to_run, clfs, grid, X_train_st, X_test_st, y_train, y_test, train_test_year, specification)
+        
+        specification = '_Standardized'
+        train_test_year = 'TR:' + str(start_date) + '-' + str(end_date) + '&TS:' + str(test_date) + '_'
+        # standardize
+        X_train_st, X_test_st = transform(X_train, X_test)  #Need to hardcode continuous variables
+        results_df_1 = clf_loop(models_to_run, clfs, grid, X_train_st, X_test_st, y_train, y_test, train_test_year, specification)
 
-            # standardize and then undersample the majority class
-            if n == 1:
-                undersamp = RandomUnderSampler(random_state=0)
-                X_train_undersamp, y_train_undersamp = undersamp.fit_sample(X_train_st, y_train)
-                X_train_und, X_test_und, y_train_und, y_test_und = train_test_split(X_train_undersamp, y_train_undersamp, 
-                                                                        test_size=test_proportion, random_state=0)
-                results_df_2 = clf_loop(models_to_run, clfs, grid, X_train_und, X_test_und, y_train_und, y_test_und, specification)
-
-
-        sub_df = pd.concat([results_df_1, results_df_2], ignore_index=True)
-        final_df = final_df.append(sub_df)
+        final_df = final_df.append(results_df_1)
 
     print('Took ', (time.time() - start_time), ' seconds to run models')
     return final_df

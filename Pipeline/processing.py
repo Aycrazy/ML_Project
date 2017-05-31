@@ -40,6 +40,7 @@ from datetime import date
 from cleaning import *
 from aux import *
 from upload_and_vizualize import *
+import aux_1
 
 ## CONFIG DATA ##
 START_DATE= '2007/01/01'
