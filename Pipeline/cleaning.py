@@ -129,6 +129,7 @@ def add_dummy(df, variable_list, sep_char = None, drop_one=False, drop_original=
             df = df.drop(variable, 1)
     return (df, df_dummy.columns)
 
+
 def aggr_dummy_cols(df, final_df, colnames, mode = None):
     for col in colnames:
         
@@ -140,13 +141,6 @@ def aggr_dummy_cols(df, final_df, colnames, mode = None):
         elif mode == 'dum':
             cross = cross.drop(0, axis = 1)
             cross.columns = [cross.columns.name for col in cross.columns]
-            
-        #SIMPLIFY THIS!!
-        elif mode == 'bim':
-            cross = cross.drop('N', axis = 1)
-            cross.columns = [cross.columns.name for col in cross.columns]
-        
-        #ADD PROCESSING CONT_VAR
         
         else:
             cross.columns = [cross.columns.name for col in cross.columns]
@@ -172,6 +166,6 @@ def generate_continous_variable(data_file, variable_list):
     for variable in variable_list:
         list_values = list(data_file.groupby(variable).groups.keys())
         for i,value in enumerate(list_values):
-            data_file[variable].replace(value,i)
+            data[variable] = data_file[variable].replace(value,i)
 
     return data_file

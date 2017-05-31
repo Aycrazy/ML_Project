@@ -177,7 +177,7 @@ def process_titlev(titlev_df, start_year, end_year):
     df['id_+_date'] = df.PGM_SYS_ID +'_'+ df.ACTUAL_END_DATE_year
     
     final_df = aggr_dummy_cols(df, final_df, cat_var, 'cat')
-    final_df = aggr_dummy_cols(df, final_df, bim_var, 'bim')
+    final_df = aggr_dummy_cols(df, final_df, bim_var, 'dum')
     
     return final_df
 
@@ -223,7 +223,9 @@ def process_formalact(formalact_df, start_year, end_year):
     df['id_+_date'] = df.PGM_SYS_ID +'_'+ df.SETTLEMENT_ENTERED_DATE_year
     
     final_df = aggr_dummy_cols(df, final_df, cat_var, 'cat')
-    #NEED TO ADD THE SUM of the amount!
+    
+    sum_df = formalact_df.groupby('PGM_SYS_ID')[cont_var[0]].sum().to_frame()
+    final_df = pd.merge(final_df, sum_df, on = 'PGM_SYS_ID')
     
     return final_df
 
