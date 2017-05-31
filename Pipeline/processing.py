@@ -38,63 +38,72 @@ from upload_and_vizualize import camel_to_snake
 from datetime import datetime as dt
 from datetime import date
 from cleaning import *
+from aux import *
+from upload_and_vizualize import *
 
-def general_read_file(df_dict, start_date, end_date):
-    #df = pd.DataFrame()
-    
-    violation = []
-    inspection = []
-    stacktest = []
-    titlev = []
-    formalact = []
-    informalact = []
-    
-    for table, var in df_dict.items():
-        date_col = var['date_col']
-        features = var['interest_var']
-        DATE_FORMAT = var['date_format']
-        
-        if table == 'violation':
-            violation = read_file(VIOLATION)
-            violation = violation[violation['ENF_RESPONSE_POLICY_CODE'] != 'FRV']
-            
-            violation = filter_date(violation, DATE_FORMAT, date_col, start=start_date, end=end_date)
-            violation = filter_col(violation, fac_id, features, date_col)
-        
-        elif table == 'inspection':
-            inspection = read_file(INSPECTION)
-            
-            inspection = filter_date(inspection, DATE_FORMAT, date_col, start=start_date, end=end_date)
-            inspection = filter_col(inspection, fac_id, features, date_col)
-        
-        elif table == 'titlev':
-            titlev = read_file(TITLEV)
-            
-            titlev = filter_date(titlev, DATE_FORMAT, date_col, start=start_date, end=end_date)
-            titlev = filter_col(titlev, fac_id, features, date_col)
-        
-        elif table == 'stacktest':
-            stacktest = read_file(STACKTEST)
-            
-            stacktest = filter_date(stacktest, DATE_FORMAT, date_col, start=start_date, end=end_date)
-            stacktest = filter_col(stacktest, fac_id, features, date_col)
-        
-        elif table == 'formalact':
-            formalact = read_file(FORMALACT)
-            
-            formalact = filter_date(formalact, DATE_FORMAT, date_col, start=start_date, end=end_date)
-            formalact = filter_col(formalact, fac_id, features, date_col)
-        
-        elif table == 'informalact':
-            informalact = read_file(INFORMALACT)
-            
-            informalact = filter_date(informalact, DATE_FORMAT, date_col, start=start_date, end=end_date)
-            informalact = filter_col(informalact, fac_id, features, date_col)
-        
-    return (violation, inspection, titlev, stacktest, formalact, informalact)
-    
+## CONFIG DATA ##
+START_DATE= '2007/01/01'
+END_DATE = '2016/12/31'
+fac_id = 'PGM_SYS_ID'
+
+VIOLATION = 'violation'
+INSPECTION = 'inspection'
+STACKTEST = 'stacktest'
+TITLEV = 'titlev'
+FORMALACT = 'formalact'
+INFORMALACT = 'informalact'
 
 
+### DON'T FORGET TO CHANGE THE DATA_FILE!!! ###
+df_dict ={'violation': {'data_file': 'ICIS-AIR_downloads/ICIS-AIR_VIOLATION_HISTORY.csv',
+                        'interest_var': ['AGENCY_TYPE_DESC','AIR_LCON_CODE','ENF_RESPONSE_POLICY_CODE','POLLUTANT_CODES','PROGRAM_CODES','HPV_RESOLVED_DATE'],
+                         'date_col': 'HPV_DAYZERO_DATE',
+                       'date_format':'%m-%d-%Y'},
+          
+           'inspection': {'data_file': 'ICIS-AIR_downloads/ICIS-AIR_FCES_PCES.csv',
+                          'interest_var': ['STATE_EPA_FLAG','COMP_MONITOR_TYPE_CODE','PROGRAM_CODES'],
+                          'date_col': 'ACTUAL_END_DATE',
+                          'date_format':'%m-%d-%Y'},
+          
+           'stacktest': {'data_file':'ICIS-AIR_downloads/ICIS-AIR_STACK_TESTS.csv',
+                         'interest_var':['COMP_MONITOR_TYPE_CODE','POLLUTANT_CODES','AIR_STACK_TEST_STATUS_CODE'],
+                        'date_col': 'ACTUAL_END_DATE',
+                        'date_format':'%m/%d/%Y'},
+          
+           'titlev':{'data_file': 'ICIS-AIR_downloads/ICIS-AIR_TITLEV_CERTS.csv',
+                     'interest_var':['COMP_MONITOR_TYPE_CODE','FACILITY_RPT_DEVIATION_FLAG'],
+                        'date_col': 'ACTUAL_END_DATE',
+                    'date_format':'%m/%d/%Y'},
+          
+           'formalact':{'data_file': 'ICIS-AIR_downloads/ICIS-AIR_FORMAL_ACTIONS.csv',
+                       'interest_var':['ENF_TYPE_CODE','PENALTY_AMOUNT'],
+                        'date_col': 'SETTLEMENT_ENTERED_DATE',
+                       'date_format':'%m/%d/%Y'},
+          
+           'informalact':{'data_file': 'ICIS-AIR_downloads/ICIS-AIR_INFORMAL_ACTIONS.csv',
+                          'interest_var':['ENF_TYPE_CODE'],
+                        'date_col': 'ACHIEVED_DATE',
+                         'date_format':'%m/%d/%Y'}}
+
+def general_read_file(df_dict, table_name, start_date, end_date):
+    df = pd.DataFrame()
+    
+    table = df_dict[table_name]
+    data_file = table['data_file']
+    date_col = table['date_col']
+    DATE_FORMAT = table['date_format']
+    features = table['interest_var']
+    
+    df = read_file(data_file)
+    
+    if table == 'violation':
+        df = violation[violation['ENF_RESPONSE_POLICY_CODE'] != 'FRV']
+            
+    df = filter_date(df, DATE_FORMAT, date_col, start=start_date, end=end_date)
+    df = filter_col(df, fac_id, features, date_col)
+        
+    return df
+    
 
 def process_violation(violation_df, start_year, end_year):
     final_df = pd.DataFrame()
@@ -224,8 +233,8 @@ def process_formalact(formalact_df, start_year, end_year):
     
     final_df = aggr_dummy_cols(df, final_df, cat_var, 'cat')
     
-    sum_df = formalact_df.groupby('PGM_SYS_ID')[cont_var[0]].sum().to_frame()
-    final_df = pd.merge(final_df, sum_df, on = 'PGM_SYS_ID')
+    sum_df = df.groupby('id_+_date')[cont_var[0]].sum().to_frame().reset_index()
+    final_df = pd.merge(final_df, sum_df, on = 'id_+_date')
     
     return final_df
 
@@ -281,3 +290,88 @@ def process_noninspectHPV(violhist, fce, start_year, end_year):
     merged_viols.drop(['PGM_SYS_ID', 'Year'], axis = 1, inplace = True)
     
     return merged_viols
+
+def change_to_zero(series_row):
+    if type(series_row) != str :
+        return 0
+    else:
+        return 1
+
+def change_to_zero_float(series_row):
+    if series_row >= 1:
+        return 1
+    else:
+        return 0
+    
+def generate_label(start_year, end_year):
+    
+    violhist = read_file('ICIS-AIR_downloads/ICIS-AIR_VIOLATION_HISTORY.csv')
+    fce = read_file('ICIS-AIR_downloads/ICIS-AIR_FCES_PCES.csv')
+
+    date_types = ['year']
+    date_format = df_dict['violation']['date_format']
+    date_col = [df_dict['violation']['date_col']]
+    #print(date_format,date_col)
+    get_occupied_frame(violhist,date_col,date_format,date_types)
+
+    date_col = [df_dict['inspection']['date_col']]
+    get_occupied_frame(fce,date_col,date_format,date_types)
+
+    fce = fce[['PGM_SYS_ID','STATE_EPA_FLAG','COMP_MONITOR_TYPE_CODE','PROGRAM_CODES','ACTUAL_END_DATE','ACTUAL_END_DATE_year']]
+    violhist = violhist[['PGM_SYS_ID','AGENCY_TYPE_DESC','AIR_LCON_CODE','ENF_RESPONSE_POLICY_CODE','POLLUTANT_CODES','PROGRAM_CODES','HPV_DAYZERO_DATE','HPV_DAYZERO_DATE_year']]
+    violhist = violhist[violhist.ENF_RESPONSE_POLICY_CODE == 'HPV']
+    #removing FRVs
+    #violhist = violhist[violhist.ENF_RESPONSE_POLICY_CODE != 'FRV']
+    violhist = violhist[violhist['HPV_DAYZERO_DATE_year'] >= start_year]
+    violhist = violhist[violhist['HPV_DAYZERO_DATE_year'] <= end_year]
+    
+    #for fce
+    fce = fce[fce['ACTUAL_END_DATE_year'] >= start_year]
+    fce = fce[fce['ACTUAL_END_DATE_year'] <= end_year]
+    
+    merged_hpv_fce = pd.merge(violhist, fce, how='right', left_on=['PGM_SYS_ID', 'HPV_DAYZERO_DATE'], right_on=['PGM_SYS_ID','ACTUAL_END_DATE'])
+    
+    #print(merged_hpv_fce.ENF_RESPONSE_POLICY_CODE.iloc[1].apply(change_to_zero))
+    
+    merged_hpv_fce['Outcome'] = merged_hpv_fce.ENF_RESPONSE_POLICY_CODE.apply(change_to_zero)
+    #finding 0's
+    
+    #print(merged_hpv_fce.Outcome.value_counts())
+    
+    output = merged_hpv_fce.groupby(['PGM_SYS_ID', 'ACTUAL_END_DATE_year']).sum().reset_index()
+    
+    #print(output.Outcome.value_counts())
+    
+    output.Outcome = output.Outcome.apply(change_to_zero_float)
+    
+    return output
+
+def generate_features(start_date, end_date):
+
+    violation = general_read_file(df_dict, VIOLATION, START_DATE, END_DATE)
+    inspection = general_read_file(df_dict, INSPECTION, START_DATE, END_DATE)
+    titlev = general_read_file(df_dict, TITLEV, START_DATE, END_DATE)
+    stacktest = general_read_file(df_dict, STACKTEST, START_DATE, END_DATE)
+    formalact = general_read_file(df_dict, FORMALACT, START_DATE, END_DATE)
+    informalact = general_read_file(df_dict, INFORMALACT, START_DATE, END_DATE)    
+        
+    violation_df = process_violation(violation, start_date, end_date)
+    inspection_df = process_titlev(titlev, start_date, end_date)
+    stacktest_df = process_stacktest(stacktest, start_date, end_date)
+    formalact_df = process_formalact(formalact, start_date, end_date)
+    informalact_df = process_informalact(informalact, start_date, end_date)
+    noninspectHPV_df = process_noninspectHPV(violation, inspection, start_date, end_date)
+    
+    final_inspect_viol_df = pd.merge(inspection_df, violation_df, how = 'left', right_on = ["id_+_date"], left_on = ["id_+_date"])
+    final_w_iv_stacktest_df = pd.merge(final_inspect_viol_df.dropna(), stacktest_df, how = 'left', right_on = ["id_+_date"], left_on = ["id_+_date"])
+    final_w_ivs_formal_df = pd.merge(final_w_iv_stacktest_df, formalact_df, how = 'left', right_on = ["id_+_date"], left_on = ["id_+_date"])
+    final_w_ivsf_informal_df = pd.merge(final_w_ivs_formal_df, informalact_df, how = 'left', right_on = ["id_+_date"], left_on = ["id_+_date"])
+    final_w_ivsfi_noninspect_df = pd.merge(final_w_ivsf_informal_df, noninspectHPV_df, how = 'left', right_on = ["id_+_date"], left_on = ["id_+_date"])
+
+    re_separate = r'(.[^_]*)_(.*)'
+    sep = lambda x: pd.Series([i for i in re.split(re_separate,x)])
+    final_id_year = final_w_ivsfi_noninspect_df['id_+_date'].apply(sep)
+    final_df =pd.concat([final_id_year.rename(columns={1:'PGM_SYS_ID',2:'HPV_DAYZERO_DATE_year'}), final_w_ivsfi_noninspect_df], axis=1)
+    final_df.drop([0, 3, 'id_+_date'], axis = 1, inplace = True)
+
+    return final_df

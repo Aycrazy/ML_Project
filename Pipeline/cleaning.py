@@ -166,6 +166,6 @@ def generate_continous_variable(data_file, variable_list):
     for variable in variable_list:
         list_values = list(data_file.groupby(variable).groups.keys())
         for i,value in enumerate(list_values):
-            data[variable] = data_file[variable].replace(value,i)
+            data_file[variable] = data_file[variable].replace(value,i)
 
     return data_file
