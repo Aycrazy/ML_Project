@@ -381,17 +381,18 @@ def run_loops(year_list, models_to_run, clfs, grid):
         start_date = each_set['train'][0][0]
         end_date = each_set['train'][0][1]
         test_date = each_set['test']
-        YEAR = 'HPV_DAYZERO_DATE_year'
+        YEAR_LABEL = 'ACTUAL_END_DATE_year'
+        YEAR_FEATURE= 'HPV_DAYZERO_DATE_year'
+
+        X_train = master_feature[master_feature[YEAR_FEATURE] >= start_date]
+        X_train = X_train[X_train[YEAR_FEATURE] <= end_date]
         
-        X_train = master_feature[master_feature[YEAR] >= start_date]
-        X_train = X_train[X_train[YEAR] <= end_date]
+        X_test = master_feature[master_feature[YEAR_FEATURE] == test_date]
         
-        X_test = master_feature[master_feature[YEAR] == test_date]
+        y_train = master_label[master_label[YEAR_LABEL] >= start_date]
+        y_train = y_train[y_train[YEAR_LABEL] <= end_date]
         
-        y_train = master_label[master_label[YEAR] >= start_date]
-        y_train = y_train[y_train[YEAR] <= end_date]
-        
-        y_test = master_label[master_label[YEAR] == test_date]
+        y_test = master_label[master_label[YEAR_LABEL] == test_date]
     
         #run once standardized (continuous variables) and once with undersampling + standarization
         specifications = ['_Standardized', '_Stand_UndSamp']
