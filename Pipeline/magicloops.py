@@ -243,9 +243,9 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
         for p in ParameterGrid(parameter_values):
             try:
                 clf.set_params(**p)
-                y_pred_probs = clf.fit(X_train, y_train).predict_proba(X_test)#[:,0]
-                print(y_pred_probs[:2])
-                y_pred_probs_sorted, y_test_sorted = zip(*sorted(zip(y_pred_probs, y_test), reverse=True))
+
+                y_pred_probs = clf.fit(X_train, y_train).predict_proba(X_test)[:,1]
+                y_pred_probs_sorted, y_test_sorted = zip(*sorted(zip(y_pred_probs, np.array(y_test)), reverse=True))
                 
                 accuracy = clf.score(X_test, y_test)
                 roc = roc_auc_score(y_test, y_pred_probs)
@@ -315,7 +315,7 @@ def find_best_classifier_by_model(result_df, eval_method):
     return result_df
 
 
-CONTINUOUS = ['PENALTY_AMOUNT']
+#CONTINUOUS = ['PENALTY_AMOUNT']
 
 def transform(X_train, X_test):
     '''
@@ -324,7 +324,7 @@ def transform(X_train, X_test):
     Output: Standardized dataframes
     '''
     
-    for variable in CONTINUOUS:
+    for variable in ['PENALTY_AMOUNT']:
         
         scalar = preprocessing.RobustScaler()
         X_train[variable] = scalar.fit_transform(X_train[variable])
