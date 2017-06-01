@@ -60,7 +60,7 @@ define_clfs_params, generate_binary_at_k, evaluate_at_k, plot_precision_recall_n
 '''
 
 ## CONFIG DATA ##
-START_DATE= '2007/01/01'
+START_DATE= '2000/01/01'
 END_DATE = '2016/12/31'
 fac_id = 'PGM_SYS_ID'
 
@@ -106,9 +106,9 @@ def define_clfs_params(grid_size):
   
 
     small_grid = { 
-    'RF':{'n_estimators': [10,100], 'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10]},
+    'RF':{'n_estimators': [10,100], 'max_depth': [5,50,100], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.001,0.1,1,10]},
-    'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
+    'SGD': { 'loss': ['hinge','log'], 'penalty': ['l2','l1','elasticnet']},
     'ET': { 'n_estimators': [10,100], 'criterion' : ['gini', 'entropy'] ,'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10]},
     'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100,1000,10000]},
     'GB': {'n_estimators': [10,100], 'learning_rate' : [0.001,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [5,50]},
@@ -122,7 +122,7 @@ def define_clfs_params(grid_size):
     tiny_grid = { 
     'RF':{'n_estimators': [10,100], 'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.001,0.1,1]},
-    'SGD': { 'loss': ['hinge','log','perceptron'], 'penalty': ['l2','l1','elasticnet']},
+    'SGD': { 'loss': ['hinge','log'], 'penalty': ['l2','l1','elasticnet']},
     'ET': { 'n_estimators': [10,100], 'criterion' : ['gini', 'entropy'] ,'max_depth': [5,50], 'max_features': ['sqrt','log2'],'min_samples_split': [2,10]},
     'AB': { 'algorithm': ['SAMME', 'SAMME.R'], 'n_estimators': [1,10,100]},
     'GB': {'n_estimators': [10,100], 'learning_rate' : [0.001,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [5,50]},
@@ -159,21 +159,22 @@ def define_clfs_params(grid_size):
 
 
 
-def generate_binary_at_k(y_scores, k):
+def generate_binary_at_k(y_scores, cutoff_value, k):
     '''
     Calculate whether predictions were accurate at threshold 100-k
     '''
     cutoff_index = int(len(y_scores) * (k / 100.0))
-    test_predictions_binary = [1 if x < cutoff_index else 0 for x in range(len(y_scores))]
-    return test_predictions_binary
+    test_predictions_binary = [1 if x < cutoff_value else 0 for x in y_scores[:cutoff_index]]
+    return test_predictions_binary, cutoff_index
 
 
 
-def evaluate_at_k(y_true, y_scores, k):
+def evaluate_at_k(y_true, y_scores, cutoff_value, k):
     '''
     Return precision, recall, f1 scores 
     '''
-    preds_at_k = generate_binary_at_k(y_scores, k)
+    preds_at_k, cutoff_index = generate_binary_at_k(y_scores, cutoff_value, k)
+    y_true = y_true[:cutoff_index]
     precision, recall, f_score, support = metrics.precision_recall_fscore_support(y_true, preds_at_k)
     precision = precision_score(y_true, preds_at_k)
     recall = recall_score(y_true, preds_at_k)
@@ -249,9 +250,9 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
                 
                 accuracy = clf.score(X_test, y_test)
                 roc = roc_auc_score(y_test, y_pred_probs)
-                p5, r5, f5 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 5.0)
-                p10, r10, f10 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 10.0)
-                p20, r20, f20 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 20.0)
+                p5, r5, f5 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, .5, 5.0)
+                p10, r10, f10 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted,.5, 10.0)
+                p20, r20, f20 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, .5, 20.0)
                 
                 results_df.loc[len(results_df)] = [train_test_year + models_to_run[index] + specification, clf, p, roc, accuracy,                                               
                                                    p5, p10, p20, r5, r10, r20, f5, f10, f20]
@@ -368,10 +369,11 @@ def run_loops(year_list, models_to_run, clfs, grid):
     start_time = time.time()
     final_df = pd.DataFrame()
     
-    master_feature = generate_features('2006','2016')
-    master_label = generate_label('2006','2016')
+    master_feature = generate_features('2000','2016')
+    master_label = generate_label('2000','2016')
     merged = pd.merge(master_feature.dropna(), master_label, how='inner', left_on=['PGM_SYS_ID','HPV_DAYZERO_DATE_year'], right_on = ['PGM_SYS_ID','ACTUAL_END_DATE_year'])
- 
+    
+    
     for each_set in year_list:
         
         #Get train and test sets
@@ -384,7 +386,10 @@ def run_loops(year_list, models_to_run, clfs, grid):
         training = training[training[YEAR] <= end_date]
         testing = merged[merged[YEAR] == test_date]
 
+        (training.shape)
+
         X_train = training.iloc[:,2:].drop('Outcome', axis = 1)
+        
         y_train = training[['Outcome']]
 
         X_test = testing.iloc[:,2:].drop('Outcome', axis = 1)

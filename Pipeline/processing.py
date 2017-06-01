@@ -38,12 +38,11 @@ from upload_and_vizualize import camel_to_snake
 from datetime import datetime as dt
 from datetime import date
 from cleaning import *
-from aux import *
+from aux_1 import *
 from upload_and_vizualize import *
-import aux_1
 
 ## CONFIG DATA ##
-START_DATE= '2007/01/01'
+START_DATE= '2000/01/01'
 END_DATE = '2016/12/31'
 fac_id = 'PGM_SYS_ID'
 
