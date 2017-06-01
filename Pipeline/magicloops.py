@@ -159,21 +159,22 @@ def define_clfs_params(grid_size):
 
 
 
-def generate_binary_at_k(y_scores, cutoff_value, k):
+def generate_binary_at_k(y_scores, k):
     '''
     Calculate whether predictions were accurate at threshold 100-k
     '''
     cutoff_index = int(len(y_scores) * (k / 100.0))
-    test_predictions_binary = [1 if x < cutoff_value else 0 for x in y_scores[:cutoff_index]]
-    return test_predictions_binary, cutoff_index
+    cutoff_value = y_scores[cutoff_index]
+    test_predictions_binary = [1 if x < cutoff_value else 0 for x in y_scores]
+    return test_predictions_binary
 
 
 
-def evaluate_at_k(y_true, y_scores, cutoff_value, k):
+def evaluate_at_k(y_true, y_scores, k):
     '''
     Return precision, recall, f1 scores 
     '''
-    preds_at_k, cutoff_index = generate_binary_at_k(y_scores, cutoff_value, k)
+    preds_at_k = generate_binary_at_k(y_scores, cutoff_value, k)
     y_true = y_true[:cutoff_index]
     precision, recall, f_score, support = metrics.precision_recall_fscore_support(y_true, preds_at_k)
     precision = precision_score(y_true, preds_at_k)
@@ -258,9 +259,9 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
 
                 accuracy = clf.score(X_test, y_test)
                 roc = roc_auc_score(y_test, y_pred_probs)
-                p5, r5, f5 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, .5, 5.0)
-                p10, r10, f10 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted,.5, 10.0)
-                p20, r20, f20 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, .5, 20.0)
+                p5, r5, f5 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 5.0)
+                p10, r10, f10 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 10.0)
+                p20, r20, f20 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 20.0)
                 
 
                 results_df.loc[len(results_df)] = [train_test_year + models_to_run[index] + specification, clf, p, roc, accuracy,                                               
