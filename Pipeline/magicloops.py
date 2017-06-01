@@ -235,6 +235,10 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
     - specification: whether data were standardized, imbalanced sampled
     Output: a dataframe of evaluating the different classifiers
     '''
+    
+    confusion_matrices = {}
+    conf_count = 0
+
     results_df =  pd.DataFrame(columns=('Model','Classifier', 'Parameters', 'AUC-ROC', 'Accuracy', 'Prec@5', 'Prec@10', 'Prec@20',
                                        'Rec@5', 'Rec@10','Rec@20', 'F@5', 'F@10', 'F@20'))
 
@@ -242,27 +246,35 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
         print (models_to_run[index] + specification)
         parameter_values = grid[models_to_run[index]]
         for p in ParameterGrid(parameter_values):
+
+
             try:
                 clf.set_params(**p)
 
                 y_pred_probs = clf.fit(X_train, y_train).predict_proba(X_test)[:,1]
                 y_pred_probs_sorted, y_test_sorted = zip(*sorted(zip(y_pred_probs, np.array(y_test)), reverse=True))
                 
+                #plot_confusion_matrix(y_pred_probs, 'Outcome', ['Violation','No Violation'], models_to_run[index])
+
                 accuracy = clf.score(X_test, y_test)
                 roc = roc_auc_score(y_test, y_pred_probs)
                 p5, r5, f5 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, .5, 5.0)
                 p10, r10, f10 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted,.5, 10.0)
                 p20, r20, f20 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, .5, 20.0)
                 
+
                 results_df.loc[len(results_df)] = [train_test_year + models_to_run[index] + specification, clf, p, roc, accuracy,                                               
                                                    p5, p10, p20, r5, r10, r20, f5, f10, f20]
+
+                #confusion_matrices[models_to_run[index]] = create_confusion_in_loop(y_test, np.array(y_pred_probs),'Outcome', ['Violation','No Violation'], models_to_run[index])
+
 
                 if NOTEBOOK == 1:
                     plot_precision_recall_n(y_test,y_pred_probs,clf)
             except IndexError as e:
                 print ('Error:',e)
                 continue
-    return results_df
+    return results_df#, confusion_matrices
 
 def train_test_dates(year_lst):
     dictionaries = []
@@ -355,6 +367,19 @@ def train_test_dates(year_lst):
         dictionaries.append(subdict)
     return dictionaries
 
+def create_confusion_in_loop(y_test, y_pred, col_name, labels, model_name):
+    '''
+     Given an actual set of y values (based on the test set) and a predicted set of y values 
+    (based on the test set), a column name, and a column name this function will produce
+    a confusion matrix and then plot that matrix, utilizing the plot_confusion_matrix function.
+    '''
+    actual = pd.Series(y_test, name = 'Actual')
+    predicted = pd.Series(y_pred, name = 'Predicted')
+    array = confusion_matrix(actual, predicted)
+    return pd.DataFrame(array, range(2), range(2))
+    #plot_confusion_matrix(df_cxm,col_name, labels, model_name)
+
+
 def run_loops(year_list, models_to_run, clfs, grid):
     '''
     Input: 
@@ -386,13 +411,12 @@ def run_loops(year_list, models_to_run, clfs, grid):
         training = training[training[YEAR] <= end_date]
         testing = merged[merged[YEAR] == test_date]
 
-        (training.shape)
-
-        X_train = training.iloc[:,2:].drop('Outcome', axis = 1)
+        
+        X_train = training.iloc[:,2:].drop(['Outcome','ACTUAL_END_DATE_year'], axis = 1)
         
         y_train = training[['Outcome']]
 
-        X_test = testing.iloc[:,2:].drop('Outcome', axis = 1)
+        X_test = testing.iloc[:,2:].drop(['Outcome','ACTUAL_END_DATE_year'], axis = 1)
         y_test = testing[['Outcome']]
     
         #run once standardized (continuous variables) and once with undersampling + standarization
@@ -401,11 +425,11 @@ def run_loops(year_list, models_to_run, clfs, grid):
         train_test_year = 'TR:' + str(start_date) + '-' + str(end_date) + '&TS:' + str(test_date) + '_'
         # standardize
         X_train_st, X_test_st = transform(X_train, X_test)  #Need to hardcode continuous variables
-        results_df_1 = clf_loop(models_to_run, clfs, grid, X_train_st, X_test_st, y_train, y_test, train_test_year, specification)
+        results_df_1= clf_loop(models_to_run, clfs, grid, X_train_st, X_test_st, y_train, y_test, train_test_year, specification)
 
         final_df = final_df.append(results_df_1)
 
     print('Took ', (time.time() - start_time), ' seconds to run models')
-    return final_df
+    return final_df#, confusion_matrices
 
 

@@ -85,6 +85,15 @@ df_dict ={'violation': {'data_file': 'ICIS-AIR_downloads/ICIS-AIR_VIOLATION_HIST
                         'date_col': 'ACHIEVED_DATE',
                          'date_format':'%m/%d/%Y'}}
 
+def get_groupby_counts(df, col_name):
+    tot_count = df[col_name].count()
+    count_per_group = df[col_name].value_counts().to_frame()
+    count_per_group['Proportion'] = count_per_group[col_name] / tot_count
+    
+    count_per_count = count_per_group[col_name].value_counts().to_frame()
+    count_per_count['Proportion'] = count_per_count[col_name] / count_per_count[col_name].sum()
+    return tot_count, count_per_group, count_per_count
+    
 def general_read_file(df_dict, table_name, start_date, end_date):
     df = pd.DataFrame()
     
