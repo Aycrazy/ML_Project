@@ -165,7 +165,7 @@ def generate_binary_at_k(y_scores, k):
     '''
     cutoff_index = int(len(y_scores) * (k / 100.0))
     cutoff_value = y_scores[cutoff_index]
-    test_predictions_binary = [1 if x < cutoff_value else 0 for x in y_scores]
+    test_predictions_binary = [1 if x >= cutoff_value else 0 for x in y_scores]
     return test_predictions_binary
 
 
@@ -271,10 +271,10 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
     y_prob = np.empty(X_test.shape[0])
     y_prob.fill(1)
     accuracy = clf.score(X_test, y_test)
-    roc = roc_auc_score(y_test, y_pred_probs)
-    p5, r5, f5 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 5.0)
-    p10, r10, f10 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 10.0)
-    p20, r20, f20 = evaluate_at_k(y_test_sorted,y_pred_probs_sorted, 20.0)
+    roc = roc_auc_score(y_test, y_prob)
+    p5, r5, f5 = evaluate_at_k(y_test_sorted,y_prob, 5.0)
+    p10, r10, f10 = evaluate_at_k(y_test_sorted,y_prob, 10.0)
+    p20, r20, f20 = evaluate_at_k(y_test_sorted,y_prob, 20.0)
     results_df.loc[len(results_df)] = ["BASE_ZERO_CASE", "BASE_ZERO_CASE", None, roc, f5, f10, f20, accuracy,                                              
                                                    p5, p10, p20, r5, r10, r20]
     return results_df
