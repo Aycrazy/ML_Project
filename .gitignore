@@ -2,6 +2,7 @@
 
 *data/
 *npdes_downloads/
+*extra_data/
 
 #Ignore zip
 *.zip

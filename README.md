@@ -3,4 +3,6 @@ ICIS-Air contains emissions, compliance, and enforcement data on stationary sour
 
 We will utilize the ICIS-Air Dataset to predict Clean Air Act violations.
 
-As of right now, the dataset is too large to upload.
+Inside the ICIS_explore2 file you can find some very basic graphs that will give you a sense of the distribution of our data.
+
+In the ICIS-Output&Features file you can run a version of our 'magic loop' that allows you to view the output and evaluation metrics of various machine learning models over different time intervals between January 1, 2000 and January 1, 2017that we experimented with before choosing a model to best address our selected policy problem- helping the EPA improve their Clean Air Act inspection schedule in an effor to prevent further violations.
