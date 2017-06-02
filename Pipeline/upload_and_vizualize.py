@@ -214,6 +214,6 @@ def create_date_charts(df, date_types, original_date_columns):
 def day_to_int(series_row):
     '''
     convert a datetime input into an integer input
-    ''''
+    '''
     
     return int(str(series_row).split()[0])
