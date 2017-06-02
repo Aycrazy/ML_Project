@@ -86,6 +86,10 @@ df_dict ={'violation': {'data_file': 'ICIS-AIR_downloads/ICIS-AIR_VIOLATION_HIST
                          'date_format':'%m/%d/%Y'}}
 
 def get_groupby_counts(df, col_name):
+    '''
+    Creates total, per group, and by column counts
+    '''
+
     tot_count = df[col_name].count()
     count_per_group = df[col_name].value_counts().to_frame()
     count_per_group['Proportion'] = count_per_group[col_name] / tot_count
@@ -93,10 +97,10 @@ def get_groupby_counts(df, col_name):
     count_per_count = count_per_group[col_name].value_counts().to_frame()
     count_per_count['Proportion'] = count_per_count[col_name] / count_per_count[col_name].sum()
     return tot_count, count_per_group, count_per_count
-    
+
 def general_read_file(df_dict, table_name, start_date, end_date):
-    df = pd.DataFrame()
     
+    df = pd.DataFrame()
     table = df_dict[table_name]
     data_file = table['data_file']
     date_col = table['date_col']
@@ -115,6 +119,10 @@ def general_read_file(df_dict, table_name, start_date, end_date):
     
 
 def process_violation(violation_df, start_year, end_year):
+    '''
+    Preprocess the violation dataframe and create aggregate count variable rows
+    '''
+
     final_df = pd.DataFrame()
     
     outcome = ['ENF_RESPONSE_POLICY_CODE']
@@ -151,6 +159,10 @@ def process_violation(violation_df, start_year, end_year):
 
 
 def process_inspection(inspection_df, start_year, end_year):
+    '''
+    Preprocess the inspection dataframe and create aggregate count variable rows
+    '''
+    
     final_df = pd.DataFrame()
     
     cat_var = ['STATE_EPA_FLAG','COMP_MONITOR_TYPE_CODE']
@@ -176,6 +188,10 @@ def process_inspection(inspection_df, start_year, end_year):
 
 
 def process_titlev(titlev_df, start_year, end_year):
+    '''
+    Preprocess the titlev dataframe and create aggregate count variable rows
+    '''
+
     final_df = pd.DataFrame()
     
     cat_var = ['COMP_MONITOR_TYPE_CODE']
@@ -201,6 +217,9 @@ def process_titlev(titlev_df, start_year, end_year):
 
 
 def process_stacktest(stacktest_df, start_year, end_year):
+    '''
+    Preprocess the stacktest dataframe and create aggregate count variable rows
+    '''
     final_df = pd.DataFrame()
     
     #I HAVEN'T PUT IN POLLUTANT_CODES
@@ -223,6 +242,10 @@ def process_stacktest(stacktest_df, start_year, end_year):
     return final_df
 
 def process_formalact(formalact_df, start_year, end_year):
+    '''
+    Preprocess the formal action dataframe and create aggregate count variable rows
+    '''
+
     final_df = pd.DataFrame()
     
     cat_var = ['ENF_TYPE_CODE']
@@ -249,6 +272,10 @@ def process_formalact(formalact_df, start_year, end_year):
 
 
 def process_informalact(informalact_df, start_year, end_year):
+    '''
+    Preprocess the informal action dataframe and create aggregate count variable rows
+    '''
+
     final_df = pd.DataFrame()
     
     cat_var = ['ENF_TYPE_CODE']
@@ -270,6 +297,10 @@ def process_informalact(informalact_df, start_year, end_year):
     return final_df
 
 def process_noninspectHPV(violhist, fce, start_year, end_year):
+    '''
+    Preprocess the noninspection dataframe and create aggregate count variable rows
+    '''
+
     #removing FRVs
     violhist = violhist[violhist.ENF_RESPONSE_POLICY_CODE != 'FRV']
     violhist = violhist[violhist['HPV_DAYZERO_DATE_year'] >= start_year]
@@ -313,6 +344,10 @@ def change_to_zero_float(series_row):
         return 0
     
 def generate_label(start_year, end_year):
+    '''
+    Given the start year and end year for the selected sample, this funciton generates the outcome
+    variable
+    '''
     
     violhist = read_file('ICIS-AIR_downloads/ICIS-AIR_VIOLATION_HISTORY.csv')
     fce = read_file('ICIS-AIR_downloads/ICIS-AIR_FCES_PCES.csv')
@@ -356,7 +391,10 @@ def generate_label(start_year, end_year):
     return output
 
 def generate_features(start_date, end_date):
-
+    '''
+    Given a start date and an end_date generate all of our features
+    '''
+    
     violation = general_read_file(df_dict, VIOLATION, START_DATE, END_DATE)
     inspection = general_read_file(df_dict, INSPECTION, START_DATE, END_DATE)
     titlev = general_read_file(df_dict, TITLEV, START_DATE, END_DATE)

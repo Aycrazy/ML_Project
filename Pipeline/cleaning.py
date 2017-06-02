@@ -46,17 +46,25 @@ from datetime import date
 #interest_var = ['PGM_SYS_ID','ACTIVITY_ID','AGENCY_TYPE_DESC','STATE_CODE','AIR_LCON_CODE','COMP_DETERMINATION_UID','ENF_RESPONSE_POLICY_CODE','PROGRAM_CODES']
 def replace_with_value(data_file, variables, values):
     '''
+
     '''
     for variable in variables:
         value = values[variables.index(variable)]
         data_file[variable] = data_file[variable].fillna(value)
 
 def convert_to_datetime(series_row, date_format):
+    '''
+    Convert a string to a datetime object
+    '''
     if str(series_row) == 'nan':
         return float('nan')
     return dt.strptime(series_row, date_format)
 
 def convert_to_year(series_row):
+    '''
+    Convert a datetime object to a year string
+    '''
+
     if str(series_row) == 'NaT' or str(series_row)== 'nan':
         return float('nan')
     else:
@@ -70,18 +78,30 @@ def to_date_time(df, date_format, date_col):
     return df
 
 def convert_to_month(series_row):
+    '''
+    Converts a datetime object to a month string
+    '''
+
     if str(series_row) == 'NaT' or str(series_row)== 'nan':
         return float('nan')
     else:
         return str(series_row.month)
 
 def get_month_year_col(df, date_column, date_format):
+    '''
+    Creates a dataframe row from a datetime object that contains datetime,
+    month and year
+    '''
+
     df[date_column+'_datetime'] = df[date_column].apply(convert_to_datetime, date_format=date_format)
     df[date_column+'_month'] = df[date_column+'_datetime'].apply(convert_to_month)
     df[date_column+'_year'] = df[date_column+'_datetime'].apply(convert_to_year)
     return df
 
 def filter_date(df, date_format, date_col, start=None, end=None):
+    '''
+    Convert a string to a datetime object
+    '''
     df = to_date_time(df, date_format, date_col)
     
     
@@ -102,8 +122,6 @@ def filter_col(df, fac_id, features, date_col):
     #filter needed
     df = df[[fac_id] + [date_col] + [date_col+'_year'] + features]
     return df
-
-
 
 
 ## FROM PREPROCESSING, MODIFIED ##
@@ -131,6 +149,10 @@ def add_dummy(df, variable_list, sep_char = None, drop_one=False, drop_original=
 
 
 def aggr_dummy_cols(df, final_df, colnames, mode = None):
+    '''
+    Aggregates dummy columns
+    '''
+
     for col in colnames:
         
         cross = pd.crosstab(df['id_+_date'], columns=df[col])

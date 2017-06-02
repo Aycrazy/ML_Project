@@ -198,6 +198,9 @@ def special_plot(df, column_name,point_of_interest1, point_of_interest2):
     plt.tight_layout()
 
 def create_date_charts(df, date_types, original_date_columns):
+    '''
+    Create area charts based on given date-types
+    '''
     for date_column in original_date_columns:
         for date_type in date_types:
             if date_type == 'month':
@@ -209,4 +212,8 @@ def create_date_charts(df, date_types, original_date_columns):
     plt.show()
 
 def day_to_int(series_row):
+    '''
+    convert a datetime input into an integer input
+    ''''
+    
     return int(str(series_row).split()[0])
