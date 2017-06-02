@@ -20,7 +20,7 @@ import random
 from scipy import optimize
 import time
 from upload_and_vizualize import *
-
+from sklearn.preprocessing import MultiLabelBinarizer
 
 ### DON'T FORGET TO CHANGE THE DATA_FILE!!! ###
 df_dict ={'violation': {'data_file': 'ICIS-AIR_downloads/ICIS-AIR_VIOLATION_HISTORY.csv',
@@ -174,8 +174,7 @@ def evaluate_at_k(y_true, y_scores, k):
     '''
     Return precision, recall, f1 scores 
     '''
-    preds_at_k = generate_binary_at_k(y_scores, cutoff_value, k)
-    y_true = y_true[:cutoff_index]
+    preds_at_k = generate_binary_at_k(y_scores, k)
     precision, recall, f_score, support = metrics.precision_recall_fscore_support(y_true, preds_at_k)
     precision = precision_score(y_true, preds_at_k)
     recall = recall_score(y_true, preds_at_k)
@@ -237,8 +236,8 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
     Output: a dataframe of evaluating the different classifiers
     '''
     
-    confusion_matrices = {}
-    conf_count = 0
+    #confusion_matrices = {}
+    #conf_count = 0
 
     results_df =  pd.DataFrame(columns=('Model','Classifier', 'Parameters', 'AUC-ROC', 'Accuracy', 'Prec@5', 'Prec@10', 'Prec@20',
                                        'Rec@5', 'Rec@10','Rec@20', 'F@5', 'F@10', 'F@20'))
@@ -267,7 +266,7 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
                 results_df.loc[len(results_df)] = [train_test_year + models_to_run[index] + specification, clf, p, roc, accuracy,                                               
                                                    p5, p10, p20, r5, r10, r20, f5, f10, f20]
 
-                #confusion_matrices[models_to_run[index]] = create_confusion_in_loop(y_test, np.array(y_pred_probs),'Outcome', ['Violation','No Violation'], models_to_run[index])
+                #confusion_matrices[models_to_run[index]] = create_confusion_in_loop(y_test, y_pred_probs,'Outcome', ['Violation','No Violation'], models_to_run[index])
 
 
                 if NOTEBOOK == 1:
@@ -277,25 +276,6 @@ def clf_loop(models_to_run, clfs, grid, X_train, X_test, y_train, y_test, train_
                 continue
     return results_df#, confusion_matrices
 
-def train_test_dates(year_lst):
-    dictionaries = []
-    for i in range(1, len(year_lst)):
-        subdict ={}
-        subdict['test'] = str(year_lst[i])
-        sublist = []
-        for j in range(0,i):      
-            theyears = year_lst[j:i]
-            if len(theyears) == 1:
-                sub = (str(theyears[0]),str(theyears[0]))
-                sublist.append(sub)
-            else:
-                year_start = theyears[0]
-                year_end = theyears[-1]
-                sub = (str(year_start), str(year_end))
-                sublist.append(sub)
-            subdict['train'] = sublist
-        dictionaries.append(subdict)
-    return dictionaries
 
 def find_best_classifier_by_model(result_df, eval_method):
     '''
@@ -349,6 +329,10 @@ def transform(X_train, X_test):
     return X_train, X_test
 
 def train_test_dates(year_lst):
+    '''
+    This creates a dictionary of train and test dates that performs different k-fold iterations of
+    our models
+    '''
     dictionaries = []
     for i in range(1, len(year_lst)):
         subdict ={}
@@ -376,7 +360,7 @@ def create_confusion_in_loop(y_test, y_pred, col_name, labels, model_name):
     '''
     actual = pd.Series(y_test, name = 'Actual')
     predicted = pd.Series(y_pred, name = 'Predicted')
-    array = confusion_matrix(actual, predicted)
+    array = confusion_matrix(np.array(actual), np.array(predicted))
     return pd.DataFrame(array, range(2), range(2))
     #plot_confusion_matrix(df_cxm,col_name, labels, model_name)
 
@@ -395,6 +379,8 @@ def run_loops(year_list, models_to_run, clfs, grid):
     start_time = time.time()
     final_df = pd.DataFrame()
     
+
+
     master_feature = generate_features('2000','2016')
     master_label = generate_label('2000','2016')
     merged = pd.merge(master_feature.dropna(), master_label, how='inner', left_on=['PGM_SYS_ID','HPV_DAYZERO_DATE_year'], right_on = ['PGM_SYS_ID','ACTUAL_END_DATE_year'])
@@ -426,11 +412,13 @@ def run_loops(year_list, models_to_run, clfs, grid):
         train_test_year = 'TR:' + str(start_date) + '-' + str(end_date) + '&TS:' + str(test_date) + '_'
         # standardize
         X_train_st, X_test_st = transform(X_train, X_test)  #Need to hardcode continuous variables
-        results_df_1= clf_loop(models_to_run, clfs, grid, X_train_st, X_test_st, y_train, y_test, train_test_year, specification)
+        results_df_1, confusion_matrices= clf_loop(models_to_run, clfs, grid, X_train_st, X_test_st, y_train, y_test, train_test_year, specification)
+
+
 
         final_df = final_df.append(results_df_1)
 
     print('Took ', (time.time() - start_time), ' seconds to run models')
-    return final_df#, confusion_matrices
+    return final_df #, confusion_matrices
 
 
