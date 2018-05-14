@@ -19,10 +19,9 @@ Air Full Compliance Evaluations (FCEs) and Partial Compliance Evaluations (PCEs)
 * In order to run the functions in this file, you must visit this link: https://echo.epa.gov/tools/data-downloads and download the ICIS-AIR_downloads zip file, then place that folder inside this directory.
 
 #### Results
-Ensemble tree (gradient boosted and extra tree) methods outperform the other methods which is great because of limited data and hence chances of overfitting.
-To measure performance we considered recall and the F1 score as the most important performance metric.
+* Ensemble tree (gradient boosted and extra tree) methods outperform the other methods which is great because of limited data and hence chances of overfitting.
+* To measure performance we considered recall and the F1 score as the most important performance metric.
 
 #### Limitations
 * Segmented dataset with limited common values.
 * No standardized tests were performed in all facilities
-*
